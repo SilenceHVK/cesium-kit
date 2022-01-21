@@ -1,0 +1,9 @@
+{
+  "name": "cesium-kit",
+  "version": "1.0.0",
+  "main": "index.js",
+  "repository": "https://github.com/SilenceHVK/cesium-kit.git",
+  "author": "H_VK <hvkcoder@gmail.com>",
+  "description": "Cesium-Kit 是 Cusium 的工具集，旨在通过简单的方法调用与传参实现复杂的操作",
+  "license": "MIT"
+}

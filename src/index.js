@@ -3,34 +3,34 @@ const Option = {
 	imageryProvider: null, // 地图底图
 	skyBox: null,
 	widgets: {
-			geocoder: true,
-			homeButton: true,
-			sceneModePicker: true,
-			baseLayerPicker: true,
-			navigationHelpButton: true,
-			animation: true,
-			timeline: true,
-			fullscreenButton: true,
-			navigationInstructionsInitiallyVisible: true,
-	},
+		geocoder: true,
+		homeButton: true,
+		sceneModePicker: true,
+		baseLayerPicker: true,
+		navigationHelpButton: true,
+		animation: true,
+		timeline: true,
+		fullscreenButton: true,
+		navigationInstructionsInitiallyVisible: true
+	}
 };
 
 /**
-* CesiumPlus
-*/
+ * CesiumPlus
+ */
 export default class CesiumPlus {
 	constructor(cesiumContainer, option) {
-			this.cesiumContainer = cesiumContainer;
-			this.option = Object.assign(Option, option);
-			this.Cesium = option.Cesium; // 设置 Cesium 工具
-			this.Viewer = new this.Cesium.Viewer(cesiumContainer, {
-					...option.widgets,
-					imageryProvider: option.imageryProvider,
-			}); // 设置 Viewer 对象
-			this.Scene = this.Viewer.scene; // 设置场景对象
-			this.Camera = this.Viewer.camera; // 设置相机对象
-			this.Canvas = this.Scene.canvas; // 设置 Canvas
-			this.Viewer.cesiumWidget.creditContainer.style.display = "none"; // 隐藏 cesium logo
+		this.cesiumContainer = cesiumContainer;
+		this.option = Object.assign(Option, option);
+		this.Cesium = option.Cesium; // 设置 Cesium 工具
+		this.Viewer = new this.Cesium.Viewer(cesiumContainer, {
+			...option.widgets,
+			imageryProvider: option.imageryProvider
+		}); // 设置 Viewer 对象
+		this.Scene = this.Viewer.scene; // 设置场景对象
+		this.Camera = this.Viewer.camera; // 设置相机对象
+		this.Canvas = this.Scene.canvas; // 设置 Canvas
+		this.Viewer.cesiumWidget.creditContainer.style.display = 'none'; // 隐藏 cesium logo
 	}
 
 	/**
@@ -39,29 +39,97 @@ export default class CesiumPlus {
 	 * @param screenSpaceEventType
 	 */
 	bindHandelEvent(callback, screenSpaceEventType) {
-			const handler = new this.Cesium.ScreenSpaceEventHandler(this.Canvas);
-			handler.setInputAction(callback, screenSpaceEventType);
+		const handler = new this.Cesium.ScreenSpaceEventHandler(this.Canvas);
+		handler.setInputAction(callback, screenSpaceEventType);
 	}
+
+	/**
+	 * Cesium鼠标框选事件
+	 * @param options
+	 */
+	bindHandelBoxChooseEvent(options = {
+		border: '1px dashed #0099FF',
+		backgroundColor: '#C3D5ED',
+		opacity: 0.6,
+		downType: Cesium.ScreenSpaceEventType.RIGHT_DOWN,
+		upType: Cesium.ScreenSpaceEventType.RIGHT_UP,
+		mouseDown: (event, boxChoose) => {
+		},
+		mouseMove: (event, boxChoose) => {
+		},
+		mouseUp: (event, boxChoose) => {
+		}
+	}) {
+		let flag = false;
+		let startX = 0;
+		let startY = 0;
+		let endX = 0;
+		let endY = 0;
+		const boxChoose = document.createElement('div');
+
+		// 设置鼠标按下事件
+		this.bindHandelEvent((event) => {
+			flag = true;
+			startX = event.position.x;
+			startY = event.position.y;
+			boxChoose.style.cssText = `
+						position:absolute;
+						width:0px;
+						height:0px;
+						margin:0px;
+						padding:0px;
+						border:${options?.border || '1px dashed #0099FF'};
+						background-color:${options?.backgroundColor || '#C3D5ED'};
+						z-index:1000;
+						opacity:${options?.opacity || '0.6'};
+				`;
+			boxChoose.style.left = `${startX}px`;
+			boxChoose.style.top = `${startY}px`;
+			document.body.appendChild(boxChoose);
+			options.mouseDown && options.mouseDown(event, boxChoose);
+		}, options?.downType || Cesium.ScreenSpaceEventType.RIGHT_DOWN);
+
+		// 鼠标移动事件
+		this.bindHandelEvent((event) => {
+			if (flag) {
+				endX = event.endPosition.x;
+				endY = event.endPosition.y;
+				boxChoose.style.left = `${Math.min(endX, startX)}px`;
+				boxChoose.style.top = `${Math.min(endY, startY)}px`;
+				boxChoose.style.width = `${Math.abs(endX - startX)}px`;
+				boxChoose.style.height = `${Math.abs(endY - startY)}px`;
+				options.mouseMove && options.mouseMove(event, boxChoose);
+			}
+		}, this.Cesium.ScreenSpaceEventType.MOUSE_MOVE);
+
+		// 鼠标抬起事件
+		this.bindHandelEvent((event) => {
+			flag = false;
+			options.mouseUp && options.mouseUp(event, boxChoose);
+		}, options?.upType || Cesium.ScreenSpaceEventType.RIGHT_UP);
+	}
+
 
 	/**
 	 * 禁止鼠标搜索操作
 	 */
 	banAllHandelEvent() {
-			const screenSpaceCameraController = this.Scene.screenSpaceCameraController;
-			screenSpaceCameraController.zoomEventTypes = [];
-			screenSpaceCameraController.lookEventTypes = [];
-			screenSpaceCameraController.tiltEventTypes = [];
-			screenSpaceCameraController.rotateEventTypes = [];
+		const screenSpaceCameraController = this.Scene.screenSpaceCameraController;
+		screenSpaceCameraController.zoomEventTypes = [];
+		screenSpaceCameraController.lookEventTypes = [];
+		screenSpaceCameraController.tiltEventTypes = [];
+		screenSpaceCameraController.rotateEventTypes = [];
 	}
+
 
 	/**
 	 * 设置雨天场景
 	 * @returns {PostProcessStage | PostProcessStageComposite}
 	 */
 	setRainEffect(name = 'rainEffect') {
-			return this.Scene.postProcessStages.add(new this.Cesium.PostProcessStage({
-					name,
-					fragmentShader: `
+		return this.Scene.postProcessStages.add(new this.Cesium.PostProcessStage({
+			name,
+			fragmentShader: `
 							uniform sampler2D colorTexture;
 							varying vec2 v_textureCoordinates;
 							float hash(float x){
@@ -82,7 +150,7 @@ export default class CesiumPlus {
 								 gl_FragColor = mix(texture2D(colorTexture, v_textureCoordinates), vec4(c, 1), 0.2);
 							}
 					`
-			}));
+		}));
 	}
 
 	/**
@@ -90,9 +158,9 @@ export default class CesiumPlus {
 	 * @returns {PostProcessStage | PostProcessStageComposite}
 	 */
 	setSnowEffect(name = 'snowEffect') {
-			return this.Scene.postProcessStages.add(new this.Cesium.PostProcessStage({
-					name,
-					fragmentShader: `
+		return this.Scene.postProcessStages.add(new this.Cesium.PostProcessStage({
+			name,
+			fragmentShader: `
 							uniform sampler2D colorTexture;
 							varying vec2 v_textureCoordinates;
 							float snow(vec2 uv,float scale) {
@@ -127,7 +195,7 @@ export default class CesiumPlus {
 									gl_FragColor = mix(texture2D(colorTexture, v_textureCoordinates), vec4(finalColor,1), 0.3);
 							}
 					`
-			}));
+		}));
 	}
 
 	/**
@@ -135,6 +203,6 @@ export default class CesiumPlus {
 	 * @param stage
 	 */
 	removeSceneEffect(stage) {
-			this.Scene.postProcessStages.remove(stage);
+		this.Scene.postProcessStages.remove(stage);
 	}
 }

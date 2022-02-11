@@ -121,7 +121,6 @@ export default class CesiumPlus {
 		screenSpaceCameraController.rotateEventTypes = [];
 	}
 
-
 	/**
 	 * 设置雨天场景
 	 * @returns {PostProcessStage | PostProcessStageComposite}
@@ -204,5 +203,37 @@ export default class CesiumPlus {
 	 */
 	removeSceneEffect(stage) {
 		this.Scene.postProcessStages.remove(stage);
+	}
+
+	/**
+	 * 将屏幕坐标系转为世界坐标系
+	 * @param x
+	 * @param y
+	 * @returns {Cartesian3}
+	 */
+	transformPositionToCartesian(x, y) {
+		const pick = new this.Cesium.Cartesian2(x, y);
+		return this.Scene.globe.pick(this.Camera.getPickRay(pick), this.Scene);
+	}
+
+	/**
+	 * 将屏幕坐标系转换为经纬度
+	 * @param position
+	 * @returns {number[lon, lat]}
+	 */
+	transformPositionToLngAndLat(position) {
+		// 将屏幕坐标系转为世界坐标系
+		const earthPosition = this.Camera.pickEllipsoid(
+			position,
+			this.Scene.globe.ellipsoid
+		);
+		const cartographic = Cesium.Cartographic.fromCartesian(
+			earthPosition,
+			this.Scene.globe.ellipsoid,
+			new Cesium.Cartographic()
+		);
+		const lat = Cesium.Math.toDegrees(cartographic.latitude);
+		const lon = Cesium.Math.toDegrees(cartographic.longitude);
+		return [lon, lat];
 	}
 }

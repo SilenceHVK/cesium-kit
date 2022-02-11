@@ -236,4 +236,32 @@ export default class CesiumPlus {
 		const lon = Cesium.Math.toDegrees(cartographic.longitude);
 		return [lon, lat];
 	}
+
+	/**
+	 * 添加多个实体
+	 * @param entities
+	 * @returns {*[]}
+	 */
+	addEntities(...entities) {
+		return entities.map(entity => this.Viewer.entities.add(entity));
+	}
+
+	/**
+	 * 根据多个ID返回对应的实体
+	 * @param entityIds
+	 * @returns {*[]}
+	 */
+	getEntitiesByIds(...entityIds) {
+		return entityIds.map(id => this.Viewer.entities.getById(id));
+	}
+
+	/**
+	 * 删除多个实体
+	 * @param entities
+	 */
+	removeEntities(...entities) {
+		entities.forEach(entity => this.Viewer.entities.remove(entity));
+	}
+
+
 }

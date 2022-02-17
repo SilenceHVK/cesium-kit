@@ -39,8 +39,8 @@ export default class CesiumPlus {
 	 * @param screenSpaceEventType
 	 */
 	bindHandelEvent(callback, screenSpaceEventType) {
-		const handler = new this.Cesium.ScreenSpaceEventHandler(this.Canvas);
-		handler.setInputAction(callback, screenSpaceEventType);
+		this.Viewer.screenSpaceEventHandler.removeInputAction(screenSpaceEventType);
+		this.Viewer.screenSpaceEventHandler.setInputAction(callback, screenSpaceEventType);
 	}
 
 	/**
@@ -263,5 +263,21 @@ export default class CesiumPlus {
 		entities.forEach(entity => this.Viewer.entities.remove(entity));
 	}
 
+	/**
+	 * 创建点 Point
+	 * @param options
+	 * @returns {*}
+	 */
+	createPoint(options = {
+		id: '',
+		name: '',
+		position: null
+
+	}) {
+		return this.Viewer.entities.add({
+			id: options || new Date().getTime(),
+			name: 'point'
+		});
+	}
 
 }
